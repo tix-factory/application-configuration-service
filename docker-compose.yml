@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  application-configuration-service:
+    image: tixfactory/application-configuration-service:latest
+    container_name: application-configuration-service
+    environment:
+      CONFIGURATION_DATABASE_CONNECTION_STRING: "" # ME: Put the actual connection string in the quotes when deploying! 
+      ApplicationApiKey: "" # ME: Put the TixFactory.ApplicationConfiguration.Service ApiKey here!
+    networks:
+      tix-factory:
+        aliases:
+          - tix-factory-application-configuration
+    ports:
+      - "80:80"
+    restart: always
+networks:
+  tix-factory:
+    name: tix-factory
