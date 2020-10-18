@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <TixFactoryVersion>2.0.105</TixFactoryVersion>
+    <TixFactoryVersion>2.0.107</TixFactoryVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MySql.Data" Version="8.0.21" />
