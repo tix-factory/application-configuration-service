@@ -7,7 +7,12 @@
     <PackageReference Include="MySql.Data" Version="8.0.21" />
     <PackageReference Include="TixFactory.ApplicationContext" Version="$(TixFactoryVersion)" />
     <PackageReference Include="TixFactory.Configuration" Version="$(TixFactoryVersion)" />
+    <PackageReference Include="TixFactory.Http.Client" Version="$(TixFactoryVersion)" />
     <PackageReference Include="TixFactory.Logging" Version="$(TixFactoryVersion)" />
     <PackageReference Include="TixFactory.Operations" Version="$(TixFactoryVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\Result\" />
+    <Folder Include="Models\Request\" />
   </ItemGroup>
 </Project>

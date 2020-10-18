@@ -11,7 +11,7 @@ namespace TixFactory.ApplicationConfiguration.Service
 {
 	public class Startup : TixFactory.Http.Service.Startup
 	{
-		private const string _ApiKeyHeaderName = "Tix-Factory-Api-Key";
+		public const string ApiKeyHeaderName = "Tix-Factory-Api-Key";
 		private const string _ApplicationApiKeyEnvironmentVariableName = "ApplicationApiKey";
 		private readonly IApplicationConfigurationOperations _ApplicationConfigurationOperations;
 		private readonly IApiKeyParser _ApiKeyParser;
@@ -21,10 +21,11 @@ namespace TixFactory.ApplicationConfiguration.Service
 			: base(CreateLogger())
 		{
 			var applicationKey = GetApplicationKey();
+			var applicationAuthorizationUrl = new Uri("http://applicationauthorization.services.tixfactory.systems");
 
-			_ApplicationConfigurationOperations = new ApplicationConfigurationOperations(Logger, ApplicationContext);
-			_ApiKeyParser = new ApiKeyHeaderParser(_ApiKeyHeaderName);
-			_ApplicationAuthorizationsAccessor = new ApplicationAuthorizationsAccessor(Logger, new Uri("http://applicationauthorization.services.tixfactory.systems"), applicationKey);
+			_ApplicationConfigurationOperations = new ApplicationConfigurationOperations(Logger, applicationAuthorizationUrl);
+			_ApiKeyParser = new ApiKeyHeaderParser(ApiKeyHeaderName);
+			_ApplicationAuthorizationsAccessor = new ApplicationAuthorizationsAccessor(Logger, applicationAuthorizationUrl, applicationKey);
 		}
 
 		public override void ConfigureServices(IServiceCollection services)
