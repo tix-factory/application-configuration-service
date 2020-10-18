@@ -14,12 +14,17 @@ namespace TixFactory.ApplicationConfiguration
 		private readonly IHttpClient _HttpClient;
 		private readonly Uri _WhoAmIEndpoint;
 		private readonly ExpirableDictionary<Guid, string> _ApplicationNamesByapplicationKey;
+		private readonly JsonSerializerOptions _JsonSerializerOptions;
 
 		public GetApplicationSettingsOperation(IHttpClient httpClient, Uri serviceUrl)
 		{
 			_HttpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 			_WhoAmIEndpoint = new Uri($"{serviceUrl.GetLeftPart(UriPartial.Authority)}/v1/WhoAmI");
 			_ApplicationNamesByapplicationKey = new ExpirableDictionary<Guid, string>(TimeSpan.FromHours(1), ExpirationPolicy.RenewOnRead);
+			_JsonSerializerOptions = new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			};
 		}
 
 		public (IReadOnlyDictionary<string, string> output, OperationError error) Execute(Guid applicationKey)
@@ -51,7 +56,7 @@ namespace TixFactory.ApplicationConfiguration
 					innerException: new Exception("fake exception to statisfy compiler"));
 			}
 
-			var whoAmResponse = JsonSerializer.Deserialize<ServiceResponse<WhoAmIResponse>>(responseBody);
+			var whoAmResponse = JsonSerializer.Deserialize<ServiceResponse<WhoAmIResponse>>(responseBody, _JsonSerializerOptions);
 			applicationName = _ApplicationNamesByapplicationKey[applicationKey] = whoAmResponse.Data.ApplicationName;
 
 			return applicationName;
