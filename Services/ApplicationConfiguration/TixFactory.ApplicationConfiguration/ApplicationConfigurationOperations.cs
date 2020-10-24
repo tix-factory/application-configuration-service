@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using MySql.Data.MySqlClient;
+using TixFactory.ApplicationConfiguration.Entities;
 using TixFactory.Configuration;
 using TixFactory.Http.Client;
 using TixFactory.Logging;
@@ -30,6 +31,7 @@ namespace TixFactory.ApplicationConfiguration
 			var httpClient = new HttpClient();
 			var mySqlConnection = _MySqlConnection = new LazyWithRetry<MySqlConnection>(BuildConnection);
 			var databaseConnection = new DatabaseConnection(mySqlConnection);
+			var settingsGroupEntityFactory = new SettingsGroupEntityFactory(databaseConnection);
 
 			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl);
 		}
