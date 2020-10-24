@@ -32,6 +32,7 @@ namespace TixFactory.ApplicationConfiguration
 			var mySqlConnection = _MySqlConnection = new LazyWithRetry<MySqlConnection>(BuildConnection);
 			var databaseConnection = new DatabaseConnection(mySqlConnection);
 			var settingsGroupEntityFactory = new SettingsGroupEntityFactory(databaseConnection);
+			var settingEntityFactory = new SettingEntityFactory(databaseConnection, settingsGroupEntityFactory);
 
 			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl);
 		}

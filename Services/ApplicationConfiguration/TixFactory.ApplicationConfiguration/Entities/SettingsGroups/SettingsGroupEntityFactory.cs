@@ -12,7 +12,7 @@ namespace TixFactory.ApplicationConfiguration.Entities
 		private const string _InsertSettingsGroupStoredProcedureName = "InsertSettingsGroup";
 		private const string _UpdateSettingsGroupStoredProcedureName = "UpdateSettingsGroup";
 		private const string _GetSettingsGroupByNameStoredProcedureName = "GetSettingsGroupByName";
-		private const string _DeleteSettingsGroupStoredProcedureName = "DeleteGroupsGroup";
+		private const string _DeleteSettingsGroupStoredProcedureName = "DeleteSettingsGroup";
 		private readonly TimeSpan _SettingsGroupCacheExpiry = TimeSpan.FromMinutes(1);
 		private readonly IDatabaseConnection _DatabaseConnection;
 		private readonly ExpirableDictionary<string, SettingsGroup> _SettingsGroupsByName;
