@@ -21,5 +21,17 @@ namespace TixFactory.ApplicationConfiguration.Service.Controllers
 		{
 			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.GetApplicationSettingsOperation, apiKey);
 		}
+
+		[HttpPost]
+		public IActionResult SetApplicationSetting([FromBody] SetApplicationSettingRequest request)
+		{
+			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.SetApplicationSettingOperation, request);
+		}
+
+		[HttpPost]
+		public IActionResult DeleteApplicationSetting([FromBody] DeleteApplicationSettingRequest request)
+		{
+			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.DeleteApplicationSettingOperation, request);
+		}
 	}
 }
