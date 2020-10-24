@@ -28,6 +28,16 @@ namespace TixFactory.ApplicationConfiguration.Entities
 
 		public SettingsGroup GetOrCreateSettingsGroup(string name)
 		{
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+			}
+
+			if (name.Length > EntityValidation.MaxSettingsGroupNameLength)
+			{
+				throw new ArgumentException($"{nameof(name)} cannot be longer than {EntityValidation.MaxSettingsGroupNameLength}", nameof(name));
+			}
+
 			var settingsGroup = GetSettingsGroupByName(name);
 			if (settingsGroup != null)
 			{
@@ -46,6 +56,11 @@ namespace TixFactory.ApplicationConfiguration.Entities
 
 		public SettingsGroup GetSettingsGroupByName(string name)
 		{
+			if (string.IsNullOrWhiteSpace(name) || name.Length > EntityValidation.MaxSettingsGroupNameLength)
+			{
+				return null;
+			}
+
 			if (_SettingsGroupsByName.TryGetValue(name, out var settingsGroup))
 			{
 				return settingsGroup;
@@ -62,6 +77,16 @@ namespace TixFactory.ApplicationConfiguration.Entities
 
 		public void UpdateSettingsGroup(SettingsGroup settingsGroup)
 		{
+			if (string.IsNullOrWhiteSpace(settingsGroup.Name))
+			{
+				throw new ArgumentException($"{nameof(settingsGroup)}.{nameof(settingsGroup.Name)} cannot be null or whitespace.", nameof(settingsGroup));
+			}
+
+			if (settingsGroup.Name.Length > EntityValidation.MaxSettingsGroupNameLength)
+			{
+				throw new ArgumentException($"{nameof(settingsGroup)}.{nameof(settingsGroup.Name)} cannot be longer than {EntityValidation.MaxSettingsGroupNameLength}", nameof(settingsGroup));
+			}
+
 			_DatabaseConnection.ExecuteWriteStoredProcedure(_UpdateSettingsGroupStoredProcedureName, new[]
 			{
 				new MySqlParameter(@"_ID", settingsGroup.Id),

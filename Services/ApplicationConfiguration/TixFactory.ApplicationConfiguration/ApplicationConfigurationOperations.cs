@@ -15,6 +15,7 @@ namespace TixFactory.ApplicationConfiguration
 		private readonly ILazyWithRetry<MySqlConnection> _MySqlConnection;
 
 		public IOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
+		public IOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
 
 		public ApplicationConfigurationOperations(ILogger logger, Uri applicationAuthorizationServiceUrl)
 		{
@@ -35,6 +36,7 @@ namespace TixFactory.ApplicationConfiguration
 			var settingEntityFactory = new SettingEntityFactory(databaseConnection, settingsGroupEntityFactory);
 
 			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl);
+			SetApplicationSettingOperation = new SetApplicationSettingOperation(settingEntityFactory);
 		}
 
 		private MySqlConnection BuildConnection()

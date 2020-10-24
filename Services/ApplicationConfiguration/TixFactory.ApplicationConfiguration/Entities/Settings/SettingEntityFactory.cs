@@ -28,6 +28,16 @@ namespace TixFactory.ApplicationConfiguration.Entities
 
 		public Setting CreateSetting(string settingsGroupName, string name, string value)
 		{
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+			}
+
+			if (name.Length > EntityValidation.MaxSettingNameLength)
+			{
+				throw new ArgumentException($"{nameof(name)} cannot be longer than {EntityValidation.MaxSettingNameLength}", nameof(name));
+			}
+
 			var settingsGroup = _SettingsGroupEntityFactory.GetOrCreateSettingsGroup(settingsGroupName);
 
 			var setting = GetSettingBySettingsGroupNameAndSettingName(settingsGroupName, name);
@@ -85,6 +95,26 @@ namespace TixFactory.ApplicationConfiguration.Entities
 
 		public void UpdateSetting(Setting setting)
 		{
+			if (string.IsNullOrWhiteSpace(setting.Name))
+			{
+				throw new ArgumentException($"{nameof(setting)}.{nameof(setting.Name)} cannot be null or whitespace.", nameof(setting));
+			}
+
+			if (string.IsNullOrWhiteSpace(setting.Value))
+			{
+				throw new ArgumentException($"{nameof(setting)}.{nameof(setting.Value)} cannot be null or whitespace.", nameof(setting));
+			}
+
+			if (setting.Name.Length > EntityValidation.MaxSettingNameLength)
+			{
+				throw new ArgumentException($"{nameof(setting)}.{nameof(setting.Name)} cannot be longer than {EntityValidation.MaxSettingNameLength}", nameof(setting));
+			}
+
+			if (setting.Value.Length > EntityValidation.MaxSettingValueLength)
+			{
+				throw new ArgumentException($"{nameof(setting)}.{nameof(setting.Value)} cannot be longer than {EntityValidation.MaxSettingValueLength}", nameof(setting));
+			}
+
 			_DatabaseConnection.ExecuteWriteStoredProcedure(_UpdateSettingStoredProcedureName, new[]
 			{
 				new MySqlParameter(@"_ID", setting.Id),
