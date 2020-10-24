@@ -36,7 +36,7 @@ namespace TixFactory.ApplicationConfiguration
 			var settingsGroupEntityFactory = new SettingsGroupEntityFactory(databaseConnection);
 			var settingEntityFactory = new SettingEntityFactory(databaseConnection, settingsGroupEntityFactory);
 
-			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl);
+			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl, settingEntityFactory);
 			SetApplicationSettingOperation = new SetApplicationSettingOperation(settingEntityFactory);
 			DeleteApplicationSettingOperation = new DeleteApplicationSettingOperation(settingEntityFactory);
 		}
