@@ -16,6 +16,7 @@ namespace TixFactory.ApplicationConfiguration
 
 		public IOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
 		public IOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
+		public IOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
 
 		public ApplicationConfigurationOperations(ILogger logger, Uri applicationAuthorizationServiceUrl)
 		{
@@ -37,6 +38,7 @@ namespace TixFactory.ApplicationConfiguration
 
 			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl);
 			SetApplicationSettingOperation = new SetApplicationSettingOperation(settingEntityFactory);
+			DeleteApplicationSettingOperation = new DeleteApplicationSettingOperation(settingEntityFactory);
 		}
 
 		private MySqlConnection BuildConnection()
