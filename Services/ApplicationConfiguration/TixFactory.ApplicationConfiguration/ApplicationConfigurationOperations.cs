@@ -43,7 +43,8 @@ namespace TixFactory.ApplicationConfiguration
 
 		private MySqlConnection BuildConnection()
 		{
-			var connection = new MySqlConnection(Environment.GetEnvironmentVariable("CONFIGURATION_DATABASE_CONNECTION_STRING"));
+			var connectionString = Environment.GetEnvironmentVariable("CONFIGURATION_DATABASE_CONNECTION_STRING");
+			var connection = new MySqlConnection(connectionString);
 			connection.StateChange += ConnectionStateChange;
 			connection.Open();
 
