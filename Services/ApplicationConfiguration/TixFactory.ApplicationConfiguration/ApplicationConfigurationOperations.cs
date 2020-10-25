@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TixFactory.ApplicationConfiguration.Entities;
 using TixFactory.Configuration;
+using TixFactory.Data.MySql;
 using TixFactory.Http.Client;
 using TixFactory.Logging;
 using TixFactory.Operations;

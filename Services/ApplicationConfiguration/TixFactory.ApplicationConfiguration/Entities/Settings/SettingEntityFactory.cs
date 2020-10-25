@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using MySql.Data.MySqlClient;
 using TixFactory.Collections;
+using TixFactory.Data.MySql;
 
 namespace TixFactory.ApplicationConfiguration.Entities
 {
