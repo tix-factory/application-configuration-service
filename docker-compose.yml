@@ -6,6 +6,7 @@ services:
     environment:
       CONFIGURATION_DATABASE_CONNECTION_STRING: "" # ME: Put the actual connection string in the quotes when deploying! 
       ApplicationApiKey: "" # ME: Put the TixFactory.ApplicationConfiguration.Service ApiKey here!
+      LoggingServiceHost: logging.services.tixfactory.systems
     networks:
       tix-factory:
         aliases:
