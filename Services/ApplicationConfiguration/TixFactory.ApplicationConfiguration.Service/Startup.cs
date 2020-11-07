@@ -46,7 +46,8 @@ namespace TixFactory.ApplicationConfiguration.Service
 		{
 			var httpClient = new HttpClient();
 			var consoleLogger = new ConsoleLogger();
-			return new NetworkLogger(httpClient, consoleLogger, "TFACS1.TixFactory.ApplicationConfiguration.Service", "monitoring.tixfactory.systems");
+			var loggingServiceHost = Environment.GetEnvironmentVariable("LoggingServiceHost");
+			return new NetworkLogger(httpClient, consoleLogger, "TFACS1.TixFactory.ApplicationConfiguration.Service", loggingServiceHost);
 		}
 
 		private ISetting<Guid> GetApplicationKey()
