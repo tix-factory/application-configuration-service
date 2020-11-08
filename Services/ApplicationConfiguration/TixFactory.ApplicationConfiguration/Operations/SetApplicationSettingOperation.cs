@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using TixFactory.ApplicationConfiguration.Entities;
 using TixFactory.Operations;
 
 namespace TixFactory.ApplicationConfiguration
 {
-	internal class SetApplicationSettingOperation : IOperation<SetApplicationSettingRequest, SetApplicationSettingResult>
+	internal class SetApplicationSettingOperation : IAsyncOperation<SetApplicationSettingRequest, SetApplicationSettingResult>
 	{
 		private readonly ISettingEntityFactory _SettingEntityFactory;
 
@@ -13,7 +15,7 @@ namespace TixFactory.ApplicationConfiguration
 			_SettingEntityFactory = settingEntityFactory ?? throw new ArgumentNullException(nameof(settingEntityFactory));
 		}
 
-		public (SetApplicationSettingResult output, OperationError error) Execute(SetApplicationSettingRequest request)
+		public async Task<(SetApplicationSettingResult output, OperationError error)> Execute(SetApplicationSettingRequest request, CancellationToken cancellationToken)
 		{
 			if (string.IsNullOrWhiteSpace(request.ApplicationName) || request.ApplicationName.Length > EntityValidation.MaxSettingsGroupNameLength)
 			{
@@ -30,10 +32,10 @@ namespace TixFactory.ApplicationConfiguration
 				return (default, new OperationError(ApplicationConfigurationError.InvalidSettingValue));
 			}
 
-			var setting = _SettingEntityFactory.GetSettingBySettingsGroupNameAndSettingName(request.ApplicationName, request.SettingName);
+			var setting = await _SettingEntityFactory.GetSettingBySettingsGroupNameAndSettingName(request.ApplicationName, request.SettingName, cancellationToken).ConfigureAwait(false);
 			if (setting == null)
 			{
-				_SettingEntityFactory.CreateSetting(request.ApplicationName, request.SettingName, request.SettingValue);
+				await _SettingEntityFactory.CreateSetting(request.ApplicationName, request.SettingName, request.SettingValue, cancellationToken).ConfigureAwait(false);
 				return (SetApplicationSettingResult.Changed, null);
 			}
 
@@ -47,7 +49,7 @@ namespace TixFactory.ApplicationConfiguration
 
 			try
 			{
-				_SettingEntityFactory.UpdateSetting(setting);
+				await _SettingEntityFactory.UpdateSetting(setting, cancellationToken).ConfigureAwait(false);
 			}
 			catch
 			{

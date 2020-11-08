@@ -6,8 +6,10 @@ namespace TixFactory.ApplicationConfiguration
 {
 	public interface IApplicationConfigurationOperations
 	{
-		IOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
-		IOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
-		IOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
+		IAsyncOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
+
+		IAsyncOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
+
+		IAsyncOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
 	}
 }

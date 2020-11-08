@@ -11,9 +11,11 @@ namespace TixFactory.ApplicationConfiguration
 {
 	public class ApplicationConfigurationOperations : IApplicationConfigurationOperations
 	{
-		public IOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
-		public IOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
-		public IOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
+		public IAsyncOperation<Guid, IReadOnlyDictionary<string, string>> GetApplicationSettingsOperation { get; }
+
+		public IAsyncOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
+
+		public IAsyncOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
 
 		public ApplicationConfigurationOperations(ILogger logger, Uri applicationAuthorizationServiceUrl)
 		{
@@ -29,7 +31,7 @@ namespace TixFactory.ApplicationConfiguration
 
 			var httpClient = new HttpClient();
 			var connectionString = new Setting<string>(Environment.GetEnvironmentVariable("CONFIGURATION_DATABASE_CONNECTION_STRING"));
-			var databaseConnection = new DatabaseConnection(connectionString);
+			var databaseConnection = new DatabaseConnection(connectionString, logger);
 			var settingsGroupEntityFactory = new SettingsGroupEntityFactory(databaseConnection);
 			var settingEntityFactory = new SettingEntityFactory(databaseConnection, settingsGroupEntityFactory);
 

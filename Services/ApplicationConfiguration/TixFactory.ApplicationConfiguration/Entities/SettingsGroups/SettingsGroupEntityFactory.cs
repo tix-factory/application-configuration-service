@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using TixFactory.Collections;
 using TixFactory.Configuration;
@@ -11,7 +13,6 @@ namespace TixFactory.ApplicationConfiguration.Entities
 	internal class SettingsGroupEntityFactory : ISettingsGroupEntityFactory
 	{
 		private const string _InsertSettingsGroupStoredProcedureName = "InsertSettingsGroup";
-		private const string _UpdateSettingsGroupStoredProcedureName = "UpdateSettingsGroup";
 		private const string _GetSettingsGroupByNameStoredProcedureName = "GetSettingsGroupByName";
 		private const string _DeleteSettingsGroupStoredProcedureName = "DeleteSettingsGroup";
 		private readonly TimeSpan _SettingsGroupCacheExpiry = TimeSpan.FromMinutes(1);
@@ -27,7 +28,7 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				expirationPolicy: new Setting<ExpirationPolicy>(ExpirationPolicy.RenewOnRead));
 		}
 
-		public SettingsGroup GetOrCreateSettingsGroup(string name)
+		public async Task<SettingsGroup> GetOrCreateSettingsGroup(string name, CancellationToken cancellationToken)
 		{
 			if (string.IsNullOrWhiteSpace(name))
 			{
@@ -39,23 +40,23 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				throw new ArgumentException($"{nameof(name)} cannot be longer than {EntityValidation.MaxSettingsGroupNameLength}", nameof(name));
 			}
 
-			var settingsGroup = GetSettingsGroupByName(name);
+			var settingsGroup = await GetSettingsGroupByName(name, cancellationToken).ConfigureAwait(false);
 			if (settingsGroup != null)
 			{
 				return settingsGroup;
 			}
 
-			var settingsGroupId = _DatabaseConnection.ExecuteInsertStoredProcedure<long>(_InsertSettingsGroupStoredProcedureName, new[]
+			var settingsGroupId = await _DatabaseConnection.ExecuteInsertStoredProcedureAsync<long>(_InsertSettingsGroupStoredProcedureName, new[]
 			{
 				new MySqlParameter("@_Name", name)
-			});
+			}, cancellationToken).ConfigureAwait(false);
 
 			_SettingsGroupsByName.Remove(name);
 
-			return GetSettingsGroupByName(name);
+			return await GetSettingsGroupByName(name, cancellationToken).ConfigureAwait(false);
 		}
 
-		public SettingsGroup GetSettingsGroupByName(string name)
+		public async Task<SettingsGroup> GetSettingsGroupByName(string name, CancellationToken cancellationToken)
 		{
 			if (string.IsNullOrWhiteSpace(name) || name.Length > EntityValidation.MaxSettingsGroupNameLength)
 			{
@@ -67,49 +68,23 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				return settingsGroup;
 			}
 
-			var settingsGroups = _DatabaseConnection.ExecuteReadStoredProcedure<SettingsGroup>(_GetSettingsGroupByNameStoredProcedureName, new[]
+			var settingsGroups = await _DatabaseConnection.ExecuteReadStoredProcedureAsync<SettingsGroup>(_GetSettingsGroupByNameStoredProcedureName, new[]
 			{
 				new MySqlParameter("@_Name", name)
-			});
+			}, cancellationToken).ConfigureAwait(false);
 
 			settingsGroup = _SettingsGroupsByName[name] = settingsGroups.FirstOrDefault();
 			return settingsGroup;
 		}
 
-		public void UpdateSettingsGroup(SettingsGroup settingsGroup)
+		public async Task DeleteSettingsGroup(SettingsGroup settingsGroup, CancellationToken cancellationToken)
 		{
-			if (string.IsNullOrWhiteSpace(settingsGroup.Name))
+			await _DatabaseConnection.ExecuteWriteStoredProcedureAsync(_DeleteSettingsGroupStoredProcedureName, new[]
 			{
-				throw new ArgumentException($"{nameof(settingsGroup)}.{nameof(settingsGroup.Name)} cannot be null or whitespace.", nameof(settingsGroup));
-			}
+				new MySqlParameter(@"_ID", settingsGroup.Id)
+			}, cancellationToken).ConfigureAwait(false);
 
-			if (settingsGroup.Name.Length > EntityValidation.MaxSettingsGroupNameLength)
-			{
-				throw new ArgumentException($"{nameof(settingsGroup)}.{nameof(settingsGroup.Name)} cannot be longer than {EntityValidation.MaxSettingsGroupNameLength}", nameof(settingsGroup));
-			}
-
-			_DatabaseConnection.ExecuteWriteStoredProcedure(_UpdateSettingsGroupStoredProcedureName, new[]
-			{
-				new MySqlParameter(@"_ID", settingsGroup.Id),
-				new MySqlParameter("@_Name", settingsGroup.Name)
-			});
-		}
-
-		public void DeleteSettingsGroup(long id)
-		{
-			_DatabaseConnection.ExecuteWriteStoredProcedure(_DeleteSettingsGroupStoredProcedureName, new[]
-			{
-				new MySqlParameter(@"_ID", id)
-			});
-
-			foreach (var settingsGroup in _SettingsGroupsByName.Values)
-			{
-				if (settingsGroup.Id == id)
-				{
-					_SettingsGroupsByName.Remove(settingsGroup.Name);
-					return;
-				}
-			}
+			_SettingsGroupsByName.Remove(settingsGroup.Name);
 		}
 	}
 }

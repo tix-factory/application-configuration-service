@@ -1,13 +1,14 @@
-﻿namespace TixFactory.ApplicationConfiguration.Entities
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace TixFactory.ApplicationConfiguration.Entities
 {
 	internal interface ISettingsGroupEntityFactory
 	{
-		SettingsGroup GetOrCreateSettingsGroup(string name);
+		Task<SettingsGroup> GetOrCreateSettingsGroup(string name, CancellationToken cancellationToken);
 
-		SettingsGroup GetSettingsGroupByName(string name);
+		Task<SettingsGroup> GetSettingsGroupByName(string name, CancellationToken cancellationToken);
 
-		void UpdateSettingsGroup(SettingsGroup settingsGroup);
-
-		void DeleteSettingsGroup(long id);
+		Task DeleteSettingsGroup(SettingsGroup settingsGroup, CancellationToken cancellationToken);
 	}
 }
