@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using TixFactory.ApplicationConfiguration.Entities;
 using TixFactory.Collections;
 using TixFactory.Http;
@@ -9,7 +11,7 @@ using TixFactory.Operations;
 
 namespace TixFactory.ApplicationConfiguration
 {
-	internal class GetApplicationSettingsOperation : IOperation<Guid, IReadOnlyDictionary<string, string>>
+	internal class GetApplicationSettingsOperation : IAsyncOperation<Guid, IReadOnlyDictionary<string, string>>
 	{
 		private const string _ApiKeyHeaderName = "Tix-Factory-Api-Key";
 		private readonly IHttpClient _HttpClient;
@@ -30,14 +32,14 @@ namespace TixFactory.ApplicationConfiguration
 			};
 		}
 
-		public (IReadOnlyDictionary<string, string> output, OperationError error) Execute(Guid applicationKey)
+		public async Task<(IReadOnlyDictionary<string, string> output, OperationError error)> Execute(Guid applicationKey, CancellationToken cancellationToken)
 		{
 			var applicationSettings = new Dictionary<string, string>();
-			var applicationName = GetApplicationName(applicationKey);
+			var applicationName = await GetApplicationNameAsync(applicationKey, cancellationToken).ConfigureAwait(false);
 
 			if (!string.IsNullOrWhiteSpace(applicationName))
 			{
-				var settings = _SettingEntityFactory.GetSettingsByGroupName(applicationName);
+				var settings = await _SettingEntityFactory.GetSettingsByGroupName(applicationName, cancellationToken).ConfigureAwait(false);
 				foreach (var setting in settings)
 				{
 					applicationSettings[setting.Name] = setting.Value;
@@ -47,7 +49,7 @@ namespace TixFactory.ApplicationConfiguration
 			return (applicationSettings, null);
 		}
 
-		private string GetApplicationName(Guid applicationKey)
+		private async Task<string> GetApplicationNameAsync(Guid applicationKey, CancellationToken cancellationToken)
 		{
 			if (_ApplicationNamesByapplicationKey.TryGetValue(applicationKey, out var applicationName))
 			{
@@ -57,7 +59,7 @@ namespace TixFactory.ApplicationConfiguration
 			var httpRequest = new HttpRequest(HttpMethod.Post, _WhoAmIEndpoint);
 			httpRequest.Headers.Add(_ApiKeyHeaderName, applicationKey.ToString());
 
-			var httpResponse = _HttpClient.Send(httpRequest);
+			var httpResponse = await _HttpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
 			var responseBody = httpResponse.GetStringBody();
 			if (!httpResponse.IsSuccessful)
 			{

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TixFactory.Http.Service;
 
@@ -17,21 +19,21 @@ namespace TixFactory.ApplicationConfiguration.Service.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult GetApplicationSettings([FromHeader(Name = Startup.ApiKeyHeaderName)] Guid apiKey)
+		public Task<IActionResult> GetApplicationSettings([FromHeader(Name = Startup.ApiKeyHeaderName)] Guid apiKey, CancellationToken cancellationToken)
 		{
-			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.GetApplicationSettingsOperation, apiKey);
+			return _OperationExecuter.ExecuteAsync(_ApplicationConfigurationOperations.GetApplicationSettingsOperation, apiKey, cancellationToken);
 		}
 
 		[HttpPost]
-		public IActionResult SetApplicationSetting([FromBody] SetApplicationSettingRequest request)
+		public Task<IActionResult> SetApplicationSetting([FromBody] SetApplicationSettingRequest request, CancellationToken cancellationToken)
 		{
-			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.SetApplicationSettingOperation, request);
+			return _OperationExecuter.ExecuteAsync(_ApplicationConfigurationOperations.SetApplicationSettingOperation, request, cancellationToken);
 		}
 
 		[HttpPost]
-		public IActionResult DeleteApplicationSetting([FromBody] DeleteApplicationSettingRequest request)
+		public Task<IActionResult> DeleteApplicationSetting([FromBody] DeleteApplicationSettingRequest request, CancellationToken cancellationToken)
 		{
-			return _OperationExecuter.Execute(_ApplicationConfigurationOperations.DeleteApplicationSettingOperation, request);
+			return _OperationExecuter.ExecuteAsync(_ApplicationConfigurationOperations.DeleteApplicationSettingOperation, request, cancellationToken);
 		}
 	}
 }

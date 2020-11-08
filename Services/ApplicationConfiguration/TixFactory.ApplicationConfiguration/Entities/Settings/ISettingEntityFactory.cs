@@ -1,17 +1,19 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TixFactory.ApplicationConfiguration.Entities
 {
 	internal interface ISettingEntityFactory
 	{
-		Setting CreateSetting(string settingsGroupName, string name, string value);
+		Task<Setting> CreateSetting(string settingsGroupName, string name, string value, CancellationToken cancellationToken);
 
-		Setting GetSettingBySettingsGroupNameAndSettingName(string settingsGroupName, string name);
+		Task<Setting> GetSettingBySettingsGroupNameAndSettingName(string settingsGroupName, string name, CancellationToken cancellationToken);
 
-		IReadOnlyCollection<Setting> GetSettingsByGroupName(string settingsGroupName);
+		Task<IReadOnlyCollection<Setting>> GetSettingsByGroupName(string settingsGroupName, CancellationToken cancellationToken);
 
-		void UpdateSetting(Setting setting);
+		Task UpdateSetting(Setting setting, CancellationToken cancellationToken);
 
-		void DeleteSetting(long id);
+		Task DeleteSetting(Setting setting, CancellationToken cancellationToken);
 	}
 }

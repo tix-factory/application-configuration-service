@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using TixFactory.Collections;
 using TixFactory.Data.MySql;
@@ -27,7 +29,7 @@ namespace TixFactory.ApplicationConfiguration.Entities
 			_SettingsBySettingsGroupId = new ExpirableDictionary<long, IReadOnlyCollection<Setting>>(_SettingsCacheExpiry, ExpirationPolicy.RenewOnRead);
 		}
 
-		public Setting CreateSetting(string settingsGroupName, string name, string value)
+		public async Task<Setting> CreateSetting(string settingsGroupName, string name, string value, CancellationToken cancellationToken)
 		{
 			if (string.IsNullOrWhiteSpace(name))
 			{
@@ -39,42 +41,42 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				throw new ArgumentException($"{nameof(name)} cannot be longer than {EntityValidation.MaxSettingNameLength}", nameof(name));
 			}
 
-			var settingsGroup = _SettingsGroupEntityFactory.GetOrCreateSettingsGroup(settingsGroupName);
+			var settingsGroup = await _SettingsGroupEntityFactory.GetOrCreateSettingsGroup(settingsGroupName, cancellationToken).ConfigureAwait(false);
 
-			var setting = GetSettingBySettingsGroupNameAndSettingName(settingsGroupName, name);
+			var setting = await GetSettingBySettingsGroupNameAndSettingName(settingsGroupName, name, cancellationToken).ConfigureAwait(false);
 			if (setting != null)
 			{
 				throw new DuplicateNameException($"A setting with the same name in the same settings group already exists.\n\tSettings group: {settingsGroup.Name}\n\tSetting name: {name}");
 			}
 
-			var settings = GetSettingsByGroupName(settingsGroupName);
+			var settings = await GetSettingsByGroupName(settingsGroupName, cancellationToken).ConfigureAwait(false);
 			if (settings.Count >= _MaxSettingsPerSettingsGroup)
 			{
 				throw new ApplicationException($"There cannot be more than {_MaxSettingsPerSettingsGroup} per settings group.\n\tSettings group: {settingsGroup.Name}");
 			}
 
-			var settingId = _DatabaseConnection.ExecuteInsertStoredProcedure<long>(_InsertSettingStoredProcedureName, new[]
+			var settingId = await _DatabaseConnection.ExecuteInsertStoredProcedureAsync<long>(_InsertSettingStoredProcedureName, new[]
 			{
 				new MySqlParameter("@_SettingsGroupID", settingsGroup.Id),
 				new MySqlParameter("@_Name", name),
 				new MySqlParameter("@_Value", value)
-			});
+			}, cancellationToken).ConfigureAwait(false);
 
 			_SettingsBySettingsGroupId.Remove(settingsGroup.Id);
 
-			settings = GetSettingsByGroupName(settingsGroupName);
+			settings = await GetSettingsByGroupName(settingsGroupName, cancellationToken).ConfigureAwait(false);
 			return settings.First(s => s.Id == settingId);
 		}
 
-		public Setting GetSettingBySettingsGroupNameAndSettingName(string settingsGroupName, string name)
+		public async Task<Setting> GetSettingBySettingsGroupNameAndSettingName(string settingsGroupName, string name, CancellationToken cancellationToken)
 		{
-			var settings = GetSettingsByGroupName(settingsGroupName);
+			var settings = await GetSettingsByGroupName(settingsGroupName, cancellationToken).ConfigureAwait(false);
 			return settings.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
 		}
 
-		public IReadOnlyCollection<Setting> GetSettingsByGroupName(string settingsGroupName)
+		public async Task<IReadOnlyCollection<Setting>> GetSettingsByGroupName(string settingsGroupName, CancellationToken cancellationToken)
 		{
-			var settingsGroup = _SettingsGroupEntityFactory.GetSettingsGroupByName(settingsGroupName);
+			var settingsGroup = await _SettingsGroupEntityFactory.GetSettingsGroupByName(settingsGroupName, cancellationToken).ConfigureAwait(false);
 			if (settingsGroup == null)
 			{
 				return Array.Empty<Setting>();
@@ -85,16 +87,16 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				return settings;
 			}
 
-			settings = _SettingsBySettingsGroupId[settingsGroup.Id] = _DatabaseConnection.ExecuteReadStoredProcedure<Setting>(_GetSettingsBySettingsGroupIdStoredProcedureName, new[]
+			settings = _SettingsBySettingsGroupId[settingsGroup.Id] = await _DatabaseConnection.ExecuteReadStoredProcedureAsync<Setting>(_GetSettingsBySettingsGroupIdStoredProcedureName, new[]
 			{
 				new MySqlParameter("@_SettingsGroupID", settingsGroup.Id),
 				new MySqlParameter("@_Count", _MaxSettingsPerSettingsGroup)
-			});
+			}, cancellationToken).ConfigureAwait(false);
 
 			return settings;
 		}
 
-		public void UpdateSetting(Setting setting)
+		public async Task UpdateSetting(Setting setting, CancellationToken cancellationToken)
 		{
 			if (string.IsNullOrWhiteSpace(setting.Name))
 			{
@@ -116,33 +118,25 @@ namespace TixFactory.ApplicationConfiguration.Entities
 				throw new ArgumentException($"{nameof(setting)}.{nameof(setting.Value)} cannot be longer than {EntityValidation.MaxSettingValueLength}", nameof(setting));
 			}
 
-			_DatabaseConnection.ExecuteWriteStoredProcedure(_UpdateSettingStoredProcedureName, new[]
+			await _DatabaseConnection.ExecuteWriteStoredProcedureAsync(_UpdateSettingStoredProcedureName, new[]
 			{
 				new MySqlParameter(@"_ID", setting.Id),
 				new MySqlParameter("@_SettingsGroupID", setting.SettingsGroupId),
 				new MySqlParameter("@_Name", setting.Name),
 				new MySqlParameter("@_Value", setting.Value),
-			});
+			}, cancellationToken).ConfigureAwait(false);
+
+			_SettingsBySettingsGroupId.Remove(setting.SettingsGroupId);
 		}
 
-		public void DeleteSetting(long id)
+		public async Task DeleteSetting(Setting setting, CancellationToken cancellationToken)
 		{
-			_DatabaseConnection.ExecuteWriteStoredProcedure(_DeleteSettingStoredProcedureName, new[]
+			await _DatabaseConnection.ExecuteWriteStoredProcedureAsync(_DeleteSettingStoredProcedureName, new[]
 			{
-				new MySqlParameter(@"_ID", id)
-			});
+				new MySqlParameter(@"_ID", setting.Id)
+			}, cancellationToken).ConfigureAwait(false);
 
-			foreach (var settings in _SettingsBySettingsGroupId)
-			{
-				foreach (var setting in settings.Value)
-				{
-					if (setting.Id == id)
-					{
-						_SettingsBySettingsGroupId.Remove(settings.Key);
-						return;
-					}
-				}
-			}
+			_SettingsBySettingsGroupId.Remove(setting.SettingsGroupId);
 		}
 	}
 }
