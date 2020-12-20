@@ -10,6 +10,8 @@ namespace TixFactory.ApplicationConfiguration
 
 		IAsyncOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
 
+		IAsyncOperation<SetApplicationSettingValueRequest, SetApplicationSettingResult> SetApplicationSettingValueOperation { get; }
+
 		IAsyncOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
 	}
 }

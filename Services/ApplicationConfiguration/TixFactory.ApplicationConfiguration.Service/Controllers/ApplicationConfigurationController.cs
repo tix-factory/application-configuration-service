@@ -31,6 +31,13 @@ namespace TixFactory.ApplicationConfiguration.Service.Controllers
 		}
 
 		[HttpPost]
+		public Task<IActionResult> SetApplicationSettingValue([FromHeader(Name = Startup.ApiKeyHeaderName)] Guid apiKey, [FromBody] SetApplicationSettingValueRequest request, CancellationToken cancellationToken)
+		{
+			request.ApiKey = apiKey;
+			return _OperationExecuter.ExecuteAsync(_ApplicationConfigurationOperations.SetApplicationSettingValueOperation, request, cancellationToken);
+		}
+
+		[HttpPost]
 		public Task<IActionResult> DeleteApplicationSetting([FromBody] DeleteApplicationSettingRequest request, CancellationToken cancellationToken)
 		{
 			return _OperationExecuter.ExecuteAsync(_ApplicationConfigurationOperations.DeleteApplicationSettingOperation, request, cancellationToken);

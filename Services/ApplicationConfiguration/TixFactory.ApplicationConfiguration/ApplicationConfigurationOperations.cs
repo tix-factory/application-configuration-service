@@ -15,6 +15,8 @@ namespace TixFactory.ApplicationConfiguration
 
 		public IAsyncOperation<SetApplicationSettingRequest, SetApplicationSettingResult> SetApplicationSettingOperation { get; }
 
+		public IAsyncOperation<SetApplicationSettingValueRequest, SetApplicationSettingResult> SetApplicationSettingValueOperation { get; }
+
 		public IAsyncOperation<DeleteApplicationSettingRequest, DeleteApplicationSettingResult> DeleteApplicationSettingOperation { get; }
 
 		public ApplicationConfigurationOperations(ILogger logger, Uri applicationAuthorizationServiceUrl)
@@ -37,6 +39,7 @@ namespace TixFactory.ApplicationConfiguration
 
 			GetApplicationSettingsOperation = new GetApplicationSettingsOperation(httpClient, applicationAuthorizationServiceUrl, settingEntityFactory);
 			SetApplicationSettingOperation = new SetApplicationSettingOperation(settingEntityFactory);
+			SetApplicationSettingValueOperation = new SetApplicationSettingValueOperation(httpClient, applicationAuthorizationServiceUrl, settingEntityFactory);
 			DeleteApplicationSettingOperation = new DeleteApplicationSettingOperation(settingEntityFactory);
 		}
 	}
