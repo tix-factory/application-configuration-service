@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +10,7 @@ using TixFactory.Operations;
 
 namespace TixFactory.ApplicationConfiguration
 {
-	internal class GetApplicationSettingsOperation : IAsyncOperation<Guid, IReadOnlyDictionary<string, string>>
+	internal class SetApplicationSettingValueOperation : IAsyncOperation<SetApplicationSettingValueRequest, SetApplicationSettingResult>
 	{
 		private const string _ApiKeyHeaderName = "Tix-Factory-Api-Key";
 		private readonly IHttpClient _HttpClient;
@@ -20,7 +19,7 @@ namespace TixFactory.ApplicationConfiguration
 		private readonly ExpirableDictionary<Guid, string> _ApplicationNamesByapplicationKey;
 		private readonly JsonSerializerOptions _JsonSerializerOptions;
 
-		public GetApplicationSettingsOperation(IHttpClient httpClient, Uri serviceUrl, ISettingEntityFactory settingEntityFactory)
+		public SetApplicationSettingValueOperation(IHttpClient httpClient, Uri serviceUrl, ISettingEntityFactory settingEntityFactory)
 		{
 			_HttpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 			_SettingEntityFactory = settingEntityFactory ?? throw new ArgumentNullException(nameof(settingEntityFactory));
@@ -32,21 +31,50 @@ namespace TixFactory.ApplicationConfiguration
 			};
 		}
 
-		public async Task<(IReadOnlyDictionary<string, string> output, OperationError error)> Execute(Guid applicationKey, CancellationToken cancellationToken)
+		public async Task<(SetApplicationSettingResult output, OperationError error)> Execute(SetApplicationSettingValueRequest request, CancellationToken cancellationToken)
 		{
-			var applicationSettings = new Dictionary<string, string>();
-			var applicationName = await GetApplicationNameAsync(applicationKey, cancellationToken).ConfigureAwait(false);
-
-			if (!string.IsNullOrWhiteSpace(applicationName))
+			if (string.IsNullOrWhiteSpace(request.SettingName) || request.SettingName.Length > EntityValidation.MaxSettingNameLength)
 			{
-				var settings = await _SettingEntityFactory.GetSettingsByGroupName(applicationName, cancellationToken).ConfigureAwait(false);
-				foreach (var setting in settings)
-				{
-					applicationSettings[setting.Name] = setting.Value;
-				}
+				return (default, new OperationError(ApplicationConfigurationError.InvalidSettingName));
 			}
 
-			return (applicationSettings, null);
+			if (string.IsNullOrWhiteSpace(request.SettingValue) || request.SettingValue.Length > EntityValidation.MaxSettingValueLength)
+			{
+				return (default, new OperationError(ApplicationConfigurationError.InvalidSettingValue));
+			}
+
+			var applicationName = await GetApplicationNameAsync(request.ApiKey, cancellationToken).ConfigureAwait(false);
+			if (string.IsNullOrWhiteSpace(applicationName) || applicationName.Length > EntityValidation.MaxSettingsGroupNameLength)
+			{
+				return (default, new OperationError(ApplicationConfigurationError.InvalidSettingsGroupName));
+			}
+
+			var setting = await _SettingEntityFactory.GetSettingBySettingsGroupNameAndSettingName(applicationName, request.SettingName, cancellationToken).ConfigureAwait(false);
+			if (setting == null)
+			{
+				await _SettingEntityFactory.CreateSetting(applicationName, request.SettingName, request.SettingValue, cancellationToken).ConfigureAwait(false);
+				return (SetApplicationSettingResult.Changed, null);
+			}
+
+			if (setting.Value == request.SettingValue)
+			{
+				return (SetApplicationSettingResult.Unchanged, null);
+			}
+
+			var restoreValue = setting.Value;
+			setting.Value = request.SettingValue;
+
+			try
+			{
+				await _SettingEntityFactory.UpdateSetting(setting, cancellationToken).ConfigureAwait(false);
+			}
+			catch
+			{
+				setting.Value = restoreValue;
+				throw;
+			}
+
+			return (SetApplicationSettingResult.Changed, null);
 		}
 
 		private async Task<string> GetApplicationNameAsync(Guid applicationKey, CancellationToken cancellationToken)
