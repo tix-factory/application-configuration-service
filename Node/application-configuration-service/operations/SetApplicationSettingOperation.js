@@ -11,7 +11,8 @@ export default class {
 		return ["applicationName", "settingName", "settingValue"];
 	}
  
-    execute(requestBody) {
-		return this.settingEntityFactory.setSettingValue(requestBody.applicationName, requestBody.settingName, requestBody.settingValue);
+    async execute(requestBody) {
+		const updated = await this.settingEntityFactory.setSettingValue(requestBody.applicationName, requestBody.settingName, requestBody.settingValue);
+		return Promise.resolve(updated ? "Changed" : "Unchanged");
     }
 };
