@@ -351,3 +351,4 @@ MigrationBackup/
 
 # Repository Specific
 Build/NuGet
+.vscode/env/
