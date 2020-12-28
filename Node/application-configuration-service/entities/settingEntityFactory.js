@@ -43,22 +43,32 @@ export default class {
 		}
 
 		const settingsGroupId = await this.settingsGroupEntityFactory.getOrCreateSettingsGroupIdByName(settingsGroupName);
-		const updated = await this.settingCollection.findOneAndUpdate({
+		const existingSetting = await this.settingCollection.findOne({
 			settingsGroupId: settingsGroupId,
 			name: name
-		}, {
-			value: value
 		});
 
-		if (!updated) {
+		if (existingSetting) {
+			if (existingSetting.value === value) {
+				return Promise.resolve(false);
+			}
+
+			const updated = await this.settingCollection.updateOne({
+				id: existingSetting.id
+			}, {
+				value: value
+			});
+
+			return Promise.resolve(updated);
+		} else {
 			await this.settingCollection.insert({
 				settingsGroupId: settingsGroupId,
 				name: name,
 				value: value
 			});
-		}
 
-		return Promise.resolve();
+			return Promise.resolve(true);
+		}
 	}
 
 	async getSettings(settingsGroupName) {
