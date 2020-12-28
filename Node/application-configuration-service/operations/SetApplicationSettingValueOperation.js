@@ -14,6 +14,7 @@ export default class {
  
     async execute(requestBody, request) {
 		const applicationName = await this.applicationNameProvider.getApplicationName(request.apiKey);
-		return this.settingEntityFactory.setSettingValue(applicationName, requestBody.settingName, requestBody.settingValue);
+		const updated = await this.settingEntityFactory.setSettingValue(applicationName, requestBody.settingName, requestBody.settingValue);
+		return Promise.resolve(updated ? "Changed" : "Unchanged");
     }
 };
