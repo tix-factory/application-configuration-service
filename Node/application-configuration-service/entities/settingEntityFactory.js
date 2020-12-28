@@ -34,11 +34,11 @@ export default class {
 	}
 
 	async setSettingValue(settingsGroupName, name, value) {
-		if (isSettingNameValid(name)) {
+		if (!isSettingNameValid(name)) {
 			return Promise.reject("InvalidSettingName");
 		}
 
-		if (isSettingValueValid(value)) {
+		if (!isSettingValueValid(value)) {
 			return Promise.reject("InvalidSettingValue");
 		}
 
@@ -62,7 +62,11 @@ export default class {
 	}
 
 	async getSettings(settingsGroupName) {
-		const settingsGroupId = await this.settingsGroupEntityFactory.getOrCreateSettingsGroupIdByName(settingsGroupName);
+		const settingsGroupId = await this.settingsGroupEntityFactory.getSettingsGroupIdByName(settingsGroupName);
+		if (!settingsGroupId) {
+			return Promise.resolve([]);
+		}
+
 		const settings = await this.settingCollection.find({
 			settingsGroupId: settingsGroupId
 		});
@@ -80,11 +84,15 @@ export default class {
 	}
 
 	async deleteSetting(settingsGroupName, name) {
-		if (isSettingNameValid(name)) {
+		if (!isSettingNameValid(name)) {
 			return Promise.reject("InvalidSettingName");
 		}
 
-		const settingsGroupId = await this.settingsGroupEntityFactory.getOrCreateSettingsGroupIdByName(settingsGroupName);
+		const settingsGroupId = await this.settingsGroupEntityFactory.getSettingsGroupIdByName(settingsGroupName);
+		if (!settingsGroupId) {
+			return Promise.resolve(false);
+		}
+
 		return this.settingCollection.deleteOne({
 			settingsGroupId: settingsGroupId,
 			name: name

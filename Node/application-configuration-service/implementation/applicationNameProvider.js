@@ -1,5 +1,6 @@
 import { HttpRequest, HttpRequestError, httpMethods } from "@tix-factory/http";
 const CacheExpiry = 60 * 1000;
+const schemeRegex = /^\w+:/;
 
 export default class {
 	constructor(httpClient) {
